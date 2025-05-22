@@ -9,3 +9,5 @@ sacrebleu
 nltk
 rouge-score
 unbabel-comet
+evaluate
+seaborn
