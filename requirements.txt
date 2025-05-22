@@ -4,3 +4,8 @@ psycopg2
 python-dotenv
 numpy
 matplotlib
+scipy
+sacrebleu
+nltk
+rouge-score
+unbabel-comet
