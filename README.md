@@ -103,7 +103,3 @@ The script compares the metric scores with human evaluation scores using three c
 
 - `notebooks/`: Jupyter notebooks for analysis
   - `analyse_labeled_data.ipynb`: Notebook for analyzing labeled data
-
-## License
-
-[Specify your license here]
