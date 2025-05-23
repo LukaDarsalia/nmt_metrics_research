@@ -39,7 +39,9 @@ class NMTMetricsRunner:
             'CHRF++': 'src/evaluation_metrics/chrf_metric.py',
             'TER': 'src/evaluation_metrics/ter_metric.py',
             'ROUGE': 'src/evaluation_metrics/rouge_metric.py',
-            'COMET': 'src/evaluation_metrics/comet_metric.py'
+            'COMET': 'src/evaluation_metrics/comet_metric.py',
+            'LLM-Reference-Based': 'src/evaluation_metrics/llm_metric.py',
+            'LLM-Reference-Free': 'src/evaluation_metrics/llm_metric.py'
         }
         self.temp_dir = None
         self.results = {}
@@ -108,10 +110,11 @@ class NMTMetricsRunner:
             return None
 
     def run_all_metrics(
-        self,
-        input_path: str,
-        metrics_to_run: Optional[List[str]] = None,
-        comet_args: Optional[Dict[str, str]] = None
+            self,
+            input_path: str,
+            metrics_to_run: Optional[List[str]] = None,
+            comet_args: Optional[Dict[str, str]] = None,
+            llm_args: Optional[Dict[str, str]] = None  # Add this parameter
     ) -> Dict[str, str]:
         """
         Run all specified metrics.
@@ -119,7 +122,8 @@ class NMTMetricsRunner:
         Args:
             input_path: Path to input CSV file
             metrics_to_run: List of metrics to run (default: all available)
-            comet_args: Additional arguments for COMET metric
+            comet_args: Additional arguments for COMET metric (batch_size, sample_size)
+            llm_args: Additional arguments for LLM metrics (model, api_key, batch_size, max_retries, env_path, progress_file)
 
         Returns:
             Dictionary mapping metric names to their output file paths
@@ -141,8 +145,10 @@ class NMTMetricsRunner:
                 print(f"⚠️  Script not found: {metric_script}")
                 continue
 
-            # Add COMET-specific arguments
+            # Prepare additional arguments based on metric type
             additional_args = None
+
+            # Handle COMET-specific arguments
             if metric_name == 'COMET' and comet_args:
                 additional_args = []
                 if 'batch_size' in comet_args and comet_args['batch_size'] is not None:
@@ -152,6 +158,30 @@ class NMTMetricsRunner:
                 # If no arguments were added, set to None
                 if not additional_args:
                     additional_args = None
+
+            # Handle LLM-specific arguments
+            elif metric_name.startswith('LLM-') and llm_args:
+                additional_args = []
+
+                # Set evaluation mode based on metric name
+                if metric_name == 'LLM-Reference-Based':
+                    additional_args.extend(['--mode', 'reference_based'])
+                elif metric_name == 'LLM-Reference-Free':
+                    additional_args.extend(['--mode', 'reference_free'])
+
+                # Add other LLM arguments if provided
+                if 'model' in llm_args and llm_args['model'] is not None:
+                    additional_args.extend(['--model', str(llm_args['model'])])
+                if 'api_key' in llm_args and llm_args['api_key'] is not None:
+                    additional_args.extend(['--api-key', str(llm_args['api_key'])])
+                if 'batch_size' in llm_args and llm_args['batch_size'] is not None:
+                    additional_args.extend(['--batch-size', str(llm_args['batch_size'])])
+                if 'max_retries' in llm_args and llm_args['max_retries'] is not None:
+                    additional_args.extend(['--max-retries', str(llm_args['max_retries'])])
+                if 'env_path' in llm_args and llm_args['env_path'] is not None:
+                    additional_args.extend(['--env-path', str(llm_args['env_path'])])
+                if 'progress_file' in llm_args and llm_args['progress_file'] is not None:
+                    additional_args.extend(['--progress-file', str(llm_args['progress_file'])])
 
             output_path = self.run_metric(metric_name, metric_script, input_path, additional_args)
             if output_path:
@@ -487,7 +517,7 @@ def main():
     parser.add_argument(
         '--metrics', '-m',
         nargs='+',
-        default=['BLEU', 'CHRF++', 'TER', 'ROUGE', 'COMET'],
+        default=['BLEU', 'CHRF++', 'TER', 'ROUGE', 'COMET', "LLM-Reference-Based", "LLM-Reference-Free"],
         help='Metrics to evaluate (default: all)'
     )
     parser.add_argument(
@@ -519,6 +549,35 @@ def main():
         help='Directory for output files and visualizations (default: current)'
     )
 
+    parser.add_argument(
+        '--llm-model',
+        default='claude-sonnet-4-20250514',
+        help='LLM model to use for evaluation (default: claude-sonnet-4-20250514)'
+    )
+    parser.add_argument(
+        '--llm-api-key',
+        help='Anthropic API key for LLM evaluation (default: from ANTHROPIC_API_KEY env var)'
+    )
+    parser.add_argument(
+        '--llm-batch-size',
+        type=int,
+        default=None,
+        help='Number of samples to evaluate with LLM (default: all data, max: 100000)'
+    )
+    parser.add_argument(
+        '--llm-max-retries',
+        type=int,
+        default=3,
+        help='Maximum retries for failed LLM requests (default: 3)'
+    )
+    parser.add_argument(
+        '--llm-env-path',
+        help='Path to .env file for LLM configuration (default: auto-search)'
+    )
+    parser.add_argument(
+        '--llm-progress-file',
+        help='Path to save/load LLM batch progress (default: auto-generated)'
+    )
     args = parser.parse_args()
 
     # Create output directory
@@ -560,10 +619,20 @@ def main():
             'sample_size': args.comet_sample_size
         }
 
+        llm_args = {
+            'model': args.llm_model,
+            'api_key': args.llm_api_key,
+            'batch_size': args.llm_batch_size,  # batch_size is now the sample size
+            'max_retries': args.llm_max_retries,
+            'env_path': args.llm_env_path,
+            'progress_file': args.llm_progress_file
+        }
+
         metric_result_paths = runner.run_all_metrics(
             preprocessed_data_path,  # Use preprocessed data, not original
             args.metrics,
-            comet_args
+            comet_args,
+            llm_args
         )
 
         if not metric_result_paths:
