@@ -11,3 +11,4 @@ rouge-score
 unbabel-comet
 evaluate
 seaborn
+anthropic

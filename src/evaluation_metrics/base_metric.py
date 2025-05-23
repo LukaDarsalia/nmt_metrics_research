@@ -73,7 +73,7 @@ class BaseMetric(ABC):
         Raises:
             ValueError: If inputs are invalid
         """
-        if len(hypotheses) != len(references):
+        if references and len(hypotheses) != len(references):
             raise ValueError("Hypotheses and references must have the same length")
 
         if sources is not None and len(sources) != len(hypotheses):
