@@ -1,44 +1,60 @@
 {
   "correlation_results": {
     "BLEU": {
-      "pearson": 0.4125372591662732,
+      "pearson": 0.41253725916627315,
       "spearman": 0.4970869658576367,
       "kendall": 0.34367144072659206,
-      "p_value_pearson": 7.214194179751154e-18,
-      "p_value_spearman": 2.362053558347493e-26,
+      "p_value_pearson": 7.214194179751286e-18,
+      "p_value_spearman": 2.3620535583474933e-26,
       "p_value_kendall": 1.4756230459261417e-24
     },
     "CHRF++": {
-      "pearson": 0.7393956529935527,
+      "pearson": 0.7393956529935526,
       "spearman": 0.6902891557716426,
       "kendall": 0.49754460679680124,
-      "p_value_pearson": 2.2468825751296075e-70,
-      "p_value_spearman": 6.700017077370906e-58,
+      "p_value_pearson": 2.2468825751296902e-70,
+      "p_value_spearman": 6.70001707737081e-58,
       "p_value_kendall": 1.2400540291370285e-49
     },
     "TER": {
-      "pearson": 0.46631631435013937,
+      "pearson": 0.4663163143501393,
       "spearman": 0.4426484084662219,
       "kendall": 0.31060868163736044,
-      "p_value_pearson": 5.470521049336945e-23,
+      "p_value_pearson": 5.470521049337105e-23,
       "p_value_spearman": 1.2705131767665172e-20,
       "p_value_kendall": 1.2554129545849973e-19
     },
     "ROUGE": {
-      "pearson": 0.11363267703473412,
+      "pearson": 0.11363267703473415,
       "spearman": 0.06332186374025343,
       "kendall": 0.04825391774726266,
-      "p_value_pearson": 0.02303173686982581,
-      "p_value_spearman": 0.20632246577308538,
+      "p_value_pearson": 0.023031736869825473,
+      "p_value_spearman": 0.2063224657730854,
       "p_value_kendall": 0.20990548503916795
     },
     "COMET": {
-      "pearson": 0.8668977401090487,
-      "spearman": 0.7587276196994338,
-      "kendall": 0.5635584433425308,
-      "p_value_pearson": 2.1344475154394857e-122,
-      "p_value_spearman": 4.308990310089534e-76,
-      "p_value_kendall": 3.6293257576730747e-63
+      "pearson": 0.8668976464904077,
+      "spearman": 0.7587276552650158,
+      "kendall": 0.5635619744436586,
+      "p_value_pearson": 2.1347252175289784e-122,
+      "p_value_spearman": 4.308881050536059e-76,
+      "p_value_kendall": 3.6292544334234776e-63
+    },
+    "LLM-Reference-Based": {
+      "pearson": 0.8520635609111975,
+      "spearman": 0.7981336101142978,
+      "kendall": 0.6597472378104414,
+      "p_value_pearson": 6.0162169037158386e-114,
+      "p_value_spearman": 1.307201925985514e-89,
+      "p_value_kendall": 2.2286674368190174e-69
+    },
+    "LLM-Reference-Free": {
+      "pearson": 0.8253995552618525,
+      "spearman": 0.7640025996513699,
+      "kendall": 0.6225510605804014,
+      "p_value_pearson": 7.274597187008529e-101,
+      "p_value_spearman": 9.544242353328977e-78,
+      "p_value_kendall": 5.663168285914872e-66
     }
   },
   "summary_statistics": {
@@ -71,10 +87,24 @@
       "count": 400
     },
     "COMET": {
-      "mean": 0.7461655309796333,
-      "std": 0.19938984793496087,
-      "min": 0.19343146681785583,
-      "max": 0.9648236036300659,
+      "mean": 0.7461652685701847,
+      "std": 0.1993898627060501,
+      "min": 0.193431556224823,
+      "max": 0.9648234248161316,
+      "count": 400
+    },
+    "LLM-Reference-Based": {
+      "mean": 65.535,
+      "std": 27.937139706849017,
+      "min": 0.0,
+      "max": 92.0,
+      "count": 400
+    },
+    "LLM-Reference-Free": {
+      "mean": 69.22,
+      "std": 27.584807412777057,
+      "min": 0.0,
+      "max": 95.0,
       "count": 400
     }
   }
