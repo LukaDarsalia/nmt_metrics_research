@@ -42,7 +42,7 @@ class COMETMetric(BaseMetric):
                 print("Loading COMET model... This may take a while on first run.")
 
                 # Download and load the model
-                model_path = download_model("Unbabel/XCOMET-XL")
+                model_path = download_model("Unbabel/wmt22-comet-da")
                 self._comet_model = load_from_checkpoint(model_path)
 
                 print("✅ COMET model loaded successfully")
