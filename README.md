@@ -1,6 +1,6 @@
 # NMT Metrics Research
 
-A comprehensive, modular framework for evaluating Neural Machine Translation (NMT) metrics against human evaluation scores, with a focus on Georgian language translation quality assessment.
+A comprehensive, modular framework for evaluating Neural Machine Translation (NMT) metrics against human evaluation scores, with a focus on Georgian language translation quality assessment. Now includes training capabilities for custom COMET models.
 
 ## 🎯 Overview
 
@@ -11,6 +11,7 @@ This project provides a robust evaluation system for machine translation metrics
 - **Visual Analytics**: Detailed plots and visualizations for better understanding
 - **Georgian Language Focus**: Optimized for morphologically rich languages
 - **PyTorch Integration**: Support for neural-based custom metrics
+- **COMET Training**: Train custom COMET models on your own data
 
 ## ✨ Key Features
 
@@ -21,6 +22,7 @@ This project provides a robust evaluation system for machine translation metrics
 - ✅ **Rich Visualizations**: Correlation plots, heatmaps, and radar charts
 - ✅ **Data Preprocessing**: Automatic z-standardization by evaluator
 - ✅ **Comprehensive Output**: Detailed results in CSV and JSON formats
+- ✅ **Custom Model Training**: Train your own COMET models with PyTorch Lightning
 
 ## 🚀 Quick Start
 
@@ -47,20 +49,99 @@ This project provides a robust evaluation system for machine translation metrics
 
 #### Run Complete Evaluation
 ```bash
-python -m src.evaluation_metrics.runner --input data/results.csv --output metrics_results.csv
+python -m src.processors.evaluation_runner --input data/results.csv --output metrics_results.csv
 ```
 
 #### Run Without COMET (if installation issues)
 ```bash
-python -m src.evaluation_metrics.runner --input data/results.csv --output metrics_results.csv \
+python -m src.processors.evaluation_runner --input data/results.csv --output metrics_results.csv \
     --metrics BLEU CHRF++ TER ROUGE
 ```
 
 #### Run Individual Metrics
 ```bash
 # Test BLEU metric
-python -m src.evaluation_metrics.bleu_metric.py --input data/results.csv --output bleu_results.csv 
+python -m src.metrics.bleu_metric --input data/results.csv --output bleu_results.csv 
 
+# Test CHRF++ metric  
+python -m src.metrics.chrf_metric --input data/results.csv --output chrf_results.csv
+
+# Test LLM-based evaluation
+python -m src.metrics.llm_metric --mode reference_based --input data/results.csv --output llm_results.csv
+```
+
+## 🎓 Training Custom COMET Models
+
+### Prerequisites
+
+Download a pre-trained COMET checkpoint from HuggingFace:
+```bash
+# Example: Download XCOMET-XL
+wget https://huggingface.co/Unbabel/wmt22-comet-da/resolve/main/checkpoints/model.ckpt?download=true
+```
+
+### Data Preparation
+
+Prepare your training and validation data in the correct format:
+
+```bash
+python -m src.training.prepare_data \
+    --input_train raw_train_data.csv \
+    --input_valid raw_valid_data.csv \
+    --output_train train.csv \
+    --output_valid valid.csv
+```
+
+The input CSV files should contain the following columns:
+- `sourceText`: Source language text
+- `targetText`: Machine translation output
+- `referenceText`: Reference translation
+- `score` or `llm_reference_based_score`: Quality scores
+- `createdBy_id`: Evaluator ID (for validation data)
+
+### Training
+
+Train a custom COMET model using the prepared data:
+
+```bash
+comet-train \
+    --cfg src/training/configs/models/regression_model.yaml \
+    --load_from_checkpoint path/to/checkpoint.cpkg
+```
+
+### Configuration
+
+Customize training parameters by modifying the YAML files in `src/training/configs/`:
+
+- **`models/regression_model.yaml`**: Main model configuration
+  - Learning rates, batch size, dropout
+  - Training and validation data paths
+  - Loss function and optimizer settings
+
+- **`trainer.yaml`**: PyTorch Lightning trainer settings
+  - GPU/CPU selection
+  - Number of epochs
+  - Gradient accumulation
+  - Validation frequency
+
+- **`early_stopping.yaml`**: Early stopping configuration
+  - Monitored metric (default: val_kendall)
+  - Patience and mode
+
+- **`model_checkpoint.yaml`**: Model checkpointing settings
+  - Save criteria and frequency
+  - Checkpoint naming pattern
+
+#### Example: Modifying Training Parameters
+
+To change batch size and learning rate, edit `src/training/configs/models/regression_model.yaml`:
+
+```yaml
+regression_metric:
+  init_args:
+    batch_size: 16  # Increase batch size
+    learning_rate: 2e-05  # Adjust learning rate
+    encoder_learning_rate: 2e-05
 ```
 
 ## 📊 Metrics Evaluated
@@ -93,44 +174,19 @@ python -m src.evaluation_metrics.bleu_metric.py --input data/results.csv --outpu
    - Neural metric using contextual embeddings
    - Range: ~-1 to 1 (higher = better)
    - Good for: Overall quality with source context
+   - Can be customized through training
 
-## 📈 Correlation Analysis
+### LLM-based Metrics
 
-The framework evaluates metrics using three correlation measures:
+6. **LLM-Reference-Based**
+   - Uses LLM to evaluate translation quality with reference
+   - Range: 0-100 (higher = better)
+   - Good for: Nuanced quality assessment
 
-### Correlation Types
-
-1. **Pearson Correlation (r)**
-   - Measures linear relationships
-   - Sensitive to outliers
-   - Most commonly reported
-
-2. **Spearman Correlation (ρ)**
-   - Measures monotonic relationships
-   - Uses rank ordering
-   - Robust to outliers and non-linear patterns
-
-3. **Kendall's Tau (τ)**
-   - Conservative rank correlation
-   - Less sensitive to ties
-   - More reliable with small samples
-
-### Interpretation Guidelines
-
-| Correlation | Strength | Interpretation |
-|-------------|----------|----------------|
-| 0.8 - 1.0   | Excellent | Metric is highly reliable |
-| 0.6 - 0.8   | Good     | Metric is quite reliable |
-| 0.4 - 0.6   | Moderate | Metric has some utility |
-| 0.2 - 0.4   | Weak     | Metric is questionable |
-| 0.0 - 0.2   | Very weak| Metric is unreliable |
-
-### Statistical Significance
-
-- **p < 0.001**: Highly significant (***)
-- **p < 0.01**: Significant (**)
-- **p < 0.05**: Marginally significant (*)
-- **p ≥ 0.05**: Not significant
+7. **LLM-Reference-Free**
+   - Uses LLM to evaluate translation quality without reference
+   - Range: 0-100 (higher = better)
+   - Good for: Cases where references are unavailable
 
 ## 🔧 Advanced Usage
 
@@ -138,20 +194,24 @@ The framework evaluates metrics using three correlation measures:
 
 ```bash
 # Skip score standardization
-python -m src.evaluation_metrics.runner --input data/results.csv --output metrics_results.csv --no-standardize
+python -m src.processors.evaluation_runner --input data/results.csv --output metrics_results.csv --no-standardize
 
 # Adjust evaluator filtering threshold
-python -m src.evaluation_metrics.runner --input data/results.csv --output metrics_results.csv --min-evaluations 3
+python -m src.processors.evaluation_runner --input data/results.csv --output metrics_results.csv --min-evaluations 3
 
 # COMET with custom parameters
-python -m src.evaluation_metrics.runner --input data/results.csv --output metrics_results.csv \
+python -m src.processors.evaluation_runner --input data/results.csv --output metrics_results.csv \
     --comet-batch-size 4 --comet-sample-size 100
+
+# LLM evaluation with custom settings
+python -m src.processors.evaluation_runner --input data/results.csv --output metrics_results.csv \
+    --llm-model claude-sonnet-4-20250514 --llm-batch-size 50
 ```
 
 ### Creating Custom Metrics
 
 ```python
-from base_metric import BaseMetric
+from src.metrics.base_metric import BaseMetric
 from typing import List
 
 class CustomMetric(BaseMetric):
@@ -181,23 +241,33 @@ nmt_metrics_research/
 │   ├── flores_devtest_google_sheet.csv   # Reference translations
 │   └── flores_devtest_*.csv              # Additional test sets
 ├── src/
-│   ├── evaluation_metrics/               # 🆕 New modular evaluation system
-│   │   ├── base_metric.py               # Abstract base class for metrics
-│   │   ├── bleu_metric.py               # BLEU implementation
-│   │   ├── chrf_metric.py               # CHRF++ implementation
-│   │   ├── ter_metric.py                # TER implementation
-│   │   ├── rouge_metric.py              # ROUGE implementation
-│   │   ├── comet_metric.py              # COMET implementation
-│   │   ├── runner.py                    # Main evaluation orchestrator
-│   │   ├── utils.py                     # Correlation and preprocessing utilities
-│   │   ├── debug_utility.py             # Debug and analysis tools
-│   │   ├── setup_script.py              # Installation verification
-│   │   └── pytorch_integration.py       # PyTorch-based custom metrics
+│   ├── config/                          # Configuration modules
+│   │   └── metrics_registry.py          # Central metrics registry
 │   ├── data/                            # Data handling modules
 │   │   ├── data_fetcher.py             # Database data fetching
 │   │   └── db_connector.py             # Database connection management
-│   └── utils/                           # General utilities
+│   ├── metrics/                         # Metric implementations
+│   │   ├── base_metric.py               # Abstract base class for metrics
+│   │   ├── bleu_metric.py               # BLEU implementation
+│   │   ├── chrf_metric.py               # CHRF++ implementation
+│   │   ├── comet_metric.py              # COMET implementation
+│   │   ├── llm_metric.py                # LLM-based evaluation
+│   │   ├── rouge_metric.py              # ROUGE implementation
+│   │   └── ter_metric.py                # TER implementation
+│   ├── processors/                      # Processing and evaluation modules
+│   │   ├── csv_processor.py             # CSV processing with metrics
+│   │   └── evaluation_runner.py         # Main evaluation orchestrator
+│   ├── training/                        # COMET training modules
+│   │   ├── prepare_data.py             # Data preparation script
+│   │   └── configs/                    # Training configuration files
+│   │       ├── early_stopping.yaml     # Early stopping settings
+│   │       ├── model_checkpoint.yaml   # Checkpointing settings
+│   │       ├── trainer.yaml            # PyTorch Lightning trainer config
+│   │       └── models/
+│   │           └── regression_model.yaml # COMET model configuration
+│   └── utils/                           # Utility modules
 │       ├── config.py                   # Configuration management
+│       ├── llm_prompts.py              # LLM evaluation prompts
 │       └── utils.py                    # General utility functions
 ├── notebooks/                           # Jupyter notebooks
 │   └── analyse_labeled_data.ipynb      # Data analysis notebook
@@ -215,27 +285,16 @@ After running the evaluation, you'll get:
 3. **`evaluation_results.png`** - Correlation visualization plots
 4. **`radar_chart.png`** - Performance comparison radar chart
 
-### Example Output
-
-```
-📊 METRICS EVALUATION RESULTS
-================================================================================
-Metric       | Pearson  | p-val    | Spearman | p-val    | Kendall  | p-val    
---------------------------------------------------------------------------------
-CHRF++       | 0.7234   | 0.0001   | 0.7156   | 0.0001   | 0.5234   | 0.0002   
-BLEU         | 0.6789   | 0.0003   | 0.6654   | 0.0004   | 0.4789   | 0.0010   
-ROUGE        | 0.5432   | 0.0045   | 0.5321   | 0.0052   | 0.3876   | 0.0120   
-TER          | 0.4321   | 0.0234   | 0.4123   | 0.0287   | 0.2987   | 0.0456   
-COMET        | 0.8123   | 0.0000   | 0.7987   | 0.0000   | 0.6234   | 0.0000   
-
-🏆 Best Overall Metric: COMET (avg correlation: 0.7448)
-```
+For training, outputs include:
+- Model checkpoints in the specified directory
+- Training logs and metrics
+- Best model checkpoint based on validation performance
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
-3. Add your metric to `src/evaluation_metrics/`
+3. Add your metric to `src/metrics/`
 4. Follow the `BaseMetric` interface
 5. Add tests and documentation
 6. Submit a pull request
