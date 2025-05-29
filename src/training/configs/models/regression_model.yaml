@@ -1,0 +1,19 @@
+regression_metric:
+  class_path: comet.models.RegressionMetric
+  init_args:
+    nr_frozen_epochs: 0.3
+    keep_embeddings_frozen: True
+    optimizer: AdamW
+    encoder_learning_rate: 1.5e-05
+    learning_rate: 1.5e-05
+    loss: mse
+    dropout: 0.1
+    batch_size: 8
+    train_data: 
+      - train_all.csv
+    validation_data: 
+      - test_set.csv
+
+trainer: ../trainer.yaml
+early_stopping: ../early_stopping.yaml
+model_checkpoint: ../model_checkpoint.yaml

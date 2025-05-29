@@ -1,5 +1,5 @@
 """
-Utility functions for NMT metrics evaluation_metrics.
+Utility functions for NMT metrics processors.
 
 This module provides correlation calculation and data preprocessing functions.
 """
@@ -26,7 +26,7 @@ def calculate_correlations(
 
     Args:
         metric_scores: List of automatic metric scores
-        human_scores: List of corresponding human evaluation_metrics scores
+        human_scores: List of corresponding human processors scores
 
     Returns:
         Dictionary containing correlation coefficients and p-values:
@@ -118,7 +118,7 @@ def preprocess_human_scores(
     3. Returns cleaned data with standardized scores
 
     Args:
-        data: DataFrame containing evaluation_metrics data with 'score' and 'createdBy_id' columns
+        data: DataFrame containing processors data with 'score' and 'createdBy_id' columns
         min_evaluations: Minimum number of evaluations required per evaluator
 
     Returns:
@@ -210,7 +210,7 @@ def load_metric_scores(metric_results_paths: Dict[str, str]) -> Dict[str, List[f
 
 def print_evaluation_results(results: Dict[str, Dict[str, float]]) -> None:
     """
-    Print formatted evaluation_metrics results table.
+    Print formatted processors results table.
 
     Args:
         results: Dictionary mapping metric names to their correlation results
