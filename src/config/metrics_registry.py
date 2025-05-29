@@ -196,6 +196,14 @@ class MetricsRegistry:
                 'script_path': 'src.metrics.comet_metric',
                 'dependencies': ['unbabel-comet', 'torch', 'transformers'],
                 'description': 'Neural-based COMET metric using multilingual models'
+            },
+            {
+                'name': 'FineTunedCOMET',
+                'class_name': 'FineTunedCOMETMetric',
+                'module_path': 'src.metrics.finetuned_comet_metric',
+                'script_path': 'src.metrics.finetuned_comet_metric',
+                'dependencies': ['unbabel-comet', 'torch', 'transformers'],
+                'description': 'Fine tuned neural-based COMET metric using multilingual models'
             }
         ]
 
